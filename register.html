@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Register</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="center">
+
+<div class="card">
+  <h2>Register</h2>
+  <input id="email" placeholder="Email">
+  <input id="pass" type="password" placeholder="Password">
+
+  <select id="role">
+    <option value="student">Student</option>
+    <option value="teacher">Teacher</option>
+  </select>
+
+  <button onclick="register()">Register</button>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB9LUIjgUiyQY-eBDxYUC3Wu1aUcqhv8OI",
+  authDomain: "student-teacher-app-d7260.firebaseapp.com",
+  projectId: "student-teacher-app-d7260",
+  storageBucket: "student-teacher-app-d7260.firebasestorage.app",
+  messagingSenderId: "977279380361",
+  appId: "1:977279380361:web:d79851eb0494d81b0f8f58",
+  measurementId: "G-QYZ1MDKX16"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function register(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+  const role = document.getElementById("role").value;
+
+  auth.createUserWithEmailAndPassword(email,pass)
+  .then(u=>{
+    return db.collection("users").doc(u.user.uid).set({
+      email: email,
+      role: role
+    });
+  })
+  .then(()=>alert("Registered Successfully"))
+  .catch(e=>alert(e.message));
+}
+</script>
+
+
+</body>
+</html>

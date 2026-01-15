@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Admin Dashboard</h2>
+
+<h3>Add Teacher</h3>
+<input id="tname" placeholder="Teacher Name">
+<input id="tdept" placeholder="Department">
+<input id="tsubject" placeholder="Subject">
+<button onclick="addTeacher()">Add Teacher</button>
+
+<h3>All Teachers</h3>
+<div id="teacherList"></div>
+
+<h3>Students Approval</h3>
+<div id="studentList"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
