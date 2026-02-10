@@ -1,5 +1,5 @@
 /*******************************
- 🔥 FIREBASE CONFIG (FIXED)
+ 🔥 FIREBASE CONFIG
 *******************************/
 const firebaseConfig = {
   apiKey: "AIzaSyB9LUIjgUiyQY-eBDxYUC3Wu1aUcqhv8OI",
@@ -7,26 +7,27 @@ const firebaseConfig = {
   projectId: "student-teacher-app-d7260",
   storageBucket: "student-teacher-app-d7260.firebasestorage.app",
   messagingSenderId: "977279380361",
-  appId: "1:977279380361:web:d79851eb0494d81b0f8f58",
-  measurementId: "G-QYZ1MDKX16"
+  appId: "1:977279380361:web:d79851eb0494d81b0f8f58"
 };
+
 /*******************************
   INIT FIREBASE
 *******************************/
 firebase.initializeApp(firebaseConfig);
 
-/*******************************
-  INIT SERVICES
-*******************************/
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 /*******************************
-  LOGGER
+  AUTH PROTECTION
 *******************************/
-function log(msg) {
-  console.log(new Date().toISOString() + " → " + msg);
-}
+auth.onAuthStateChanged(user => {
+  const isDashboard = window.location.pathname.includes("dashboard");
+
+  if (!user && isDashboard) {
+    window.location = "index.html";
+  }
+});
 
 /*******************************
   REGISTER
@@ -42,16 +43,14 @@ function register() {
   }
 
   auth.createUserWithEmailAndPassword(email, pass)
-    .then(user => {
-      return db.collection("users").doc(user.user.uid).set({
+    .then(userCred => {
+      return db.collection("users").doc(userCred.user.uid).set({
         email: email,
         role: role,
-        approved: false,
         createdAt: new Date()
       });
     })
     .then(() => {
-      log("User Registered");
       alert("Registration successful");
       window.location = "index.html";
     })
@@ -67,7 +66,6 @@ function login() {
 
   auth.signInWithEmailAndPassword(email, pass)
     .then(() => {
-      log("User Logged In");
       window.location = "dashboard.html";
     })
     .catch(err => alert(err.message));
@@ -78,119 +76,81 @@ function login() {
 *******************************/
 function logout() {
   auth.signOut().then(() => {
-    log("User Logged Out");
     window.location = "index.html";
   });
 }
 
 /*******************************
-  BOOK APPOINTMENT
+  ADD TEACHER (ADMIN)
 *******************************/
-function book() {
-  const purpose = document.getElementById("purpose").value;
-  const time = document.getElementById("time").value;
-
-  if (!purpose || !time) {
-    alert("Fill all fields");
-    return;
-  }
-  // ADD TEACHER
 function addTeacher() {
   const name = document.getElementById("tname").value;
   const dept = document.getElementById("tdept").value;
   const subject = document.getElementById("tsubject").value;
 
+  if (!name || !dept || !subject) {
+    alert("Fill all fields");
+    return;
+  }
+
   db.collection("teachers").add({
-    name: name,
+    name,
     department: dept,
-    subject: subject
-  }).then(() => {
-    alert("Teacher added");
-    loadTeachers();
-  });
+    subject
+  }).then(() => alert("Teacher Added"));
 }
 
-// LOAD TEACHERS
+/*******************************
+  LOAD TEACHERS (ADMIN)
+*******************************/
 function loadTeachers() {
   db.collection("teachers").onSnapshot(snapshot => {
     const div = document.getElementById("teacherList");
+    if (!div) return;
+
     div.innerHTML = "";
     snapshot.forEach(doc => {
       const t = doc.data();
       div.innerHTML += `
-        <p>${t.name} - ${t.subject} 
-        <button onclick="deleteTeacher('${doc.id}')">Delete</button></p>
+        <p>
+          ${t.name} - ${t.subject}
+          <button onclick="deleteTeacher('${doc.id}')">Delete</button>
+        </p>
       `;
     });
   });
 }
 
-// DELETE TEACHER
 function deleteTeacher(id) {
   db.collection("teachers").doc(id).delete();
 }
 
-// LOAD STUDENTS
+/*******************************
+  LOAD STUDENTS (ADMIN)
+*******************************/
 function loadStudents() {
   db.collection("users").onSnapshot(snapshot => {
     const div = document.getElementById("studentList");
+    if (!div) return;
+
     div.innerHTML = "";
     snapshot.forEach(doc => {
       const u = doc.data();
-      div.innerHTML += `
-        <p>${u.email} (${u.role})</p>
-      `;
+      div.innerHTML += `<p>${u.email} (${u.role})</p>`;
     });
   });
 }
 
-// Auto load when admin page opens
-window.onload = function() {
-  if (document.getElementById("teacherList")) {
-    loadTeachers();
-    loadStudents();
-  }
-};
-// LOAD APPOINTMENTS FOR TEACHER
-function loadAppointments() {
-  db.collection("appointments").onSnapshot(snapshot => {
-    const div = document.getElementById("appointmentList");
-    div.innerHTML = "";
-
-    snapshot.forEach(doc => {
-      const a = doc.data();
-      div.innerHTML += `
-        <p>
-        Purpose: ${a.purpose} <br>
-        Time: ${a.time} <br>
-        Status: ${a.status}
-        <br>
-        <button onclick="updateStatus('${doc.id}','Approved')">Approve</button>
-        <button onclick="updateStatus('${doc.id}','Cancelled')">Cancel</button>
-        </p><hr>
-      `;
-    });
-  });
-}
-
-// UPDATE APPOINTMENT STATUS
-function updateStatus(id, status) {
-  db.collection("appointments").doc(id).update({
-    status: status
-  });
-}
-
-// Auto load when teacher page opens
-window.onload = function() {
-  if (document.getElementById("appointmentList")) {
-    loadAppointments();
-  }
-};
-// LOAD TEACHERS FOR STUDENT
+/*******************************
+  LOAD TEACHERS (STUDENT)
+*******************************/
 function loadStudentTeachers() {
   db.collection("teachers").onSnapshot(snapshot => {
     const list = document.getElementById("teachers");
     const select = document.getElementById("teacherSelect");
+
+    if (!list || !select) return;
+
     list.innerHTML = "";
     select.innerHTML = "";
 
@@ -202,53 +162,112 @@ function loadStudentTeachers() {
   });
 }
 
-// STUDENT BOOK APPOINTMENT
+/*******************************
+  BOOK APPOINTMENT (STUDENT)
+*******************************/
 function book() {
   const teacher = document.getElementById("teacherSelect").value;
   const purpose = document.getElementById("purpose").value;
   const time = document.getElementById("time").value;
 
+  const user = auth.currentUser;
+
+  if (!teacher || !purpose || !time) {
+    alert("Fill all fields");
+    return;
+  }
+
+  if (!user) {
+    alert("Not logged in");
+    return;
+  }
+
   db.collection("appointments").add({
-    teacher: teacher,
-    purpose: purpose,
-    time: time,
-    status: "Pending"
+    teacher,
+    studentId: user.uid,
+    studentEmail: user.email,
+    purpose,
+    time,
+    status: "Pending",
+    createdAt: new Date()
   }).then(() => alert("Appointment Requested"));
 }
 
-// LOAD STUDENT APPOINTMENTS
+/*******************************
+  LOAD MY APPOINTMENTS (STUDENT)
+*******************************/
 function loadMyAppointments() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  db.collection("appointments")
+    .where("studentId", "==", user.uid)
+    .onSnapshot(snapshot => {
+      const div = document.getElementById("myAppointments");
+      if (!div) return;
+
+      div.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const a = doc.data();
+        div.innerHTML += `
+          <p>
+            ${a.teacher} - ${a.time} - ${a.status}
+          </p>
+        `;
+      });
+    });
+}
+
+/*******************************
+  LOAD APPOINTMENTS (TEACHER)
+*******************************/
+function loadAppointments() {
   db.collection("appointments").onSnapshot(snapshot => {
-    const div = document.getElementById("myAppointments");
+    const div = document.getElementById("appointmentList");
+    if (!div) return;
+
     div.innerHTML = "";
+
     snapshot.forEach(doc => {
       const a = doc.data();
-      div.innerHTML += `<p>${a.teacher} - ${a.time} - ${a.status}</p>`;
+      div.innerHTML += `
+        <p>
+          Student: ${a.studentEmail} <br>
+          Purpose: ${a.purpose} <br>
+          Time: ${a.time} <br>
+          Status: ${a.status} <br>
+          <button onclick="updateStatus('${doc.id}','Approved')">Approve</button>
+          <button onclick="updateStatus('${doc.id}','Cancelled')">Cancel</button>
+        </p><hr>
+      `;
     });
   });
 }
 
-// Auto load for student page
-window.onload = function() {
+function updateStatus(id, status) {
+  db.collection("appointments").doc(id).update({
+    status: status
+  });
+}
+
+/*******************************
+  PAGE AUTO LOAD
+*******************************/
+document.addEventListener("DOMContentLoaded", function () {
+
   if (document.getElementById("teacherSelect")) {
     loadStudentTeachers();
     loadMyAppointments();
   }
-};
 
+  if (document.getElementById("appointmentList")) {
+    loadAppointments();
+  }
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      db.collection("appointments").add({
-        studentId: user.uid,
-        purpose: purpose,
-        time: time,
-        status: "Pending",
-        createdAt: new Date()
-      }).then(() => {
-        log("Appointment Booked");
-        alert("Appointment request sent");
-      });
-    }
-  });
-}
+  if (document.getElementById("teacherList")) {
+    loadTeachers();
+    loadStudents();
+  }
+
+});
