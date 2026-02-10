@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Student Dashboard</h2>
+<button onclick="logout()">Logout</button>
+
+<h3>Available Teachers</h3>
+<div id="teachers"></div>
+
+<h3>Book Appointment</h3>
+<select id="teacherSelect"></select>
+<input id="purpose" placeholder="Purpose">
+<input id="time" type="datetime-local">
+<button onclick="book()">Book</button>
+
+<h3>My Appointments</h3>
+<div id="myAppointments"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
+<script src="app.js"></script>
+
+
+</body>
+</html>

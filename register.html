@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body class="center">
+
+<div class="card">
+  <h2>Register</h2>
+
+  <input id="email" type="email" placeholder="Email">
+  <input id="pass" type="password" placeholder="Password">
+
+  <select id="role">
+    <option value="student">Student</option>
+    <option value="teacher">Teacher</option>
+  </select>
+
+  <button onclick="register()">Register</button>
+
+  <p>Already have account? <a href="index.html">Login</a></p>
+</div>
+
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+/*******************************
+ FIREBASE CONFIG
+*******************************/
+const firebaseConfig = {
+  apiKey: "AIzaSyB9LUIjgUiyQY-eBDxYUC3Wu1aUcqhv8OI",
+  authDomain: "student-teacher-app-d7260.firebaseapp.com",
+  projectId: "student-teacher-app-d7260",
+  storageBucket: "student-teacher-app-d7260.firebasestorage.app",
+  messagingSenderId: "977279380361",
+  appId: "1:977279380361:web:d79851eb0494d81b0f8f58"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/*******************************
+ AUTO REDIRECT IF LOGGED IN
+*******************************/
+auth.onAuthStateChanged(user => {
+  if (user) {
+    window.location = "dashboard.html";
+  }
+});
+
+/*******************************
+ REGISTER FUNCTION
+*******************************/
+function register() {
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("pass").value.trim();
+  const role = document.getElementById("role").value;
+
+  if (!email || !pass) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  if (pass.length < 6) {
+    alert("Password must be at least 6 characters");
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(userCred => {
+      return db.collection("users").doc(userCred.user.uid).set({
+        email: email,
+        role: role,
+        createdAt: new Date()
+      });
+    })
+    .then(() => {
+      alert("Registration Successful!");
+      window.location = "index.html"; // go to login
+    })
+    .catch(error => {
+      alert(error.message);
+    });
+}
+</script>
+
+</body>
+</html>
